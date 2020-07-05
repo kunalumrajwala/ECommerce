@@ -7,16 +7,33 @@ namespace Infrastructure.Data
 {
     public class SpecificationEvalution<TEntity> where TEntity : BaseEntity
     {
-        public static IQueryable<TEntity> GetQuery(IQueryable<TEntity> inputQuery, ISpecification<TEntity> spec)
+        public static IQueryable<TEntity> GetQuery(IQueryable<TEntity> inputQuery
+        , ISpecification<TEntity> spec)
         {
             var query = inputQuery;
 
-            if(spec.Criteria != null)
+            if (spec.Criteria != null)
             {
-                query =  query.Where(spec.Criteria);
+                query = query.Where(spec.Criteria);
             }
 
-            query =  spec.Includes.Aggregate(query, (current, inclue) => current.Include(inclue));
+
+            if (spec.OrderBy != null)
+            {
+                query = query.OrderBy(spec.OrderBy);
+            }
+
+            if (spec.OrderByDescnding != null)
+            {
+                query = query.OrderByDescending(spec.OrderByDescnding);
+            }
+
+            if (spec.IsPagingEnable)
+            {
+                query = query.Skip(spec.Skip).Take(spec.Take);
+            }
+
+            query = spec.Includes.Aggregate(query, (current, inclue) => current.Include(inclue));
             return query;
         }
     }

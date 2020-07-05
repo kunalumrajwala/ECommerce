@@ -12,9 +12,10 @@ using api.Dtos;
 using AutoMapper;
 using api.Errors;
 using Microsoft.AspNetCore.Http;
+using api.Helpers;
 
 namespace api.Controllers
-{  
+{
     public class ProductsController : BaseApiController
     {
         private readonly IGenericRepository<Products> productRepo;
@@ -34,18 +35,24 @@ namespace api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> GetProducts()
+        public async Task<ActionResult<Pagination<ProductToReturnDto>>> GetProducts
+            ([FromQuery] ProductSpecParams _productSpecParams)
         {
-            var spec = new ProductTypeandBrandSpecification();
+            var spec = new ProductTypeandBrandSpecification(_productSpecParams);
+            var count = new ProductWithFiltersForCountSpecification(_productSpecParams);
+            var totalItems = await productRepo.CountAsync(count);
+
             var product = await this.productRepo.ListAsync(spec);
-            return Ok(mapper
-                    .Map<IReadOnlyList<Products>, IReadOnlyList<ProductToReturnDto>>(product));
-           
+            var data = mapper.Map<IReadOnlyList<Products>, IReadOnlyList<ProductToReturnDto>>(product);
+
+            return Ok(new Pagination<ProductToReturnDto>(_productSpecParams.PageIndex
+                , _productSpecParams.pageSize, totalItems, data));
+
         }
 
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-          [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProductToReturnDto>> GetProduct(int id)
         {
             var spec = new ProductTypeandBrandSpecification(id);
@@ -53,7 +60,7 @@ namespace api.Controllers
 
             if (prodResult == null) return NotFound(new ApiResponse(404));
 
-            return mapper.Map<Products, ProductToReturnDto>(prodResult);                        
+            return mapper.Map<Products, ProductToReturnDto>(prodResult);
         }
 
         [HttpGet("brands")]

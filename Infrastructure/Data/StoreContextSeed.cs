@@ -41,6 +41,7 @@ namespace Infrastructure.Data
                     await context.SaveChangesAsync();
 
                 }
+                
                 if (!context.Products.Any())
                 {
                     var productsData = File.ReadAllText("../Infrastructure/Data/SeedData/products.json");
@@ -53,7 +54,6 @@ namespace Infrastructure.Data
 
                     await context.SaveChangesAsync();
                 }
-
 
             }
             catch (Exception ex)
